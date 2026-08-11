@@ -48,8 +48,8 @@ class FakeClient:
                     "license": {"url": "public"},
                     "contributing": {"url": "public"},
                     "code_of_conduct": {"url": "public"},
-                    "security": {"url": "public"},
-                    "issue_template": {"url": "public"},
+                    "security": None,
+                    "issue_template": None,
                     "pull_request_template": {"url": "public"},
                 },
             }
@@ -57,6 +57,13 @@ class FakeClient:
             return [{"name": "ci.yml"}]
         if path.endswith("/contents/CHANGELOG.md"):
             return {"name": "CHANGELOG.md"}
+        if path.endswith("/contents/SECURITY.md"):
+            return {"name": "SECURITY.md"}
+        if path.endswith("/contents/.github/ISSUE_TEMPLATE"):
+            return [
+                {"name": "bug_report.yml"},
+                {"name": "feature_request.yml"},
+            ]
         if path.endswith("/collaborators/acme/permission"):
             return {"permission": "admin"}
         return None
@@ -126,6 +133,8 @@ class ScannerTests(unittest.TestCase):
         self.assertTrue(report.maintainer.permission_verified)
         self.assertTrue(report.community.files["ci_workflows"])
         self.assertTrue(report.community.files["changelog"])
+        self.assertTrue(report.community.files["security_policy"])
+        self.assertTrue(report.community.files["issue_template"])
         self.assertIn("not a quality score or prediction", report.caveats[0].lower())
 
     def test_private_repository_is_rejected_before_secondary_collection(self):
