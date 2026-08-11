@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a new public evidence source or report behavior
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Evidence problem
+      description: What maintainer claim is difficult to verify today?
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Authoritative public source
+      description: Link to the API or documentation that supports the signal.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Privacy and security boundaries
+      description: Explain how the feature remains read-only and avoids private data.
+    validations:
+      required: true
+
