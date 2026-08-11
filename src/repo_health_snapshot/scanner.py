@@ -102,6 +102,14 @@ def scan_repository(
     community_files = community.get("files") if isinstance(community.get("files"), dict) else {}
     workflows = client.get(f"{root}/contents/.github/workflows", allow_not_found=True)
     changelog = client.get(f"{root}/contents/CHANGELOG.md", allow_not_found=True)
+    security_policy = _first_existing_content(
+        client,
+        root,
+        ("SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md"),
+    )
+    issue_templates = client.get(
+        f"{root}/contents/.github/ISSUE_TEMPLATE", allow_not_found=True
+    )
     files = {
         "readme": bool(community_files.get("readme")),
         "license": bool(community_files.get("license") or repo.get("license")),
@@ -109,8 +117,15 @@ def scan_repository(
         "code_of_conduct": bool(
             community_files.get("code_of_conduct") or community_files.get("code_of_conduct_file")
         ),
-        "security_policy": bool(community_files.get("security")),
-        "issue_template": bool(community_files.get("issue_template")),
+        "security_policy": bool(
+            community_files.get("security")
+            or community_files.get("security_policy")
+            or security_policy
+        ),
+        "issue_template": bool(
+            community_files.get("issue_template")
+            or _has_issue_template(issue_templates)
+        ),
         "pull_request_template": bool(community_files.get("pull_request_template")),
         "ci_workflows": isinstance(workflows, list) and bool(workflows),
         "changelog": changelog is not None,
@@ -227,6 +242,27 @@ def _permission(
     if not isinstance(response, dict) or not isinstance(response.get("permission"), str):
         return None, False
     return response["permission"], True
+
+
+def _first_existing_content(
+    client: GitHubClient, root: str, paths: tuple[str, ...]
+) -> bool:
+    for path in paths:
+        if client.get(f"{root}/contents/{path}", allow_not_found=True) is not None:
+            return True
+    return False
+
+
+def _has_issue_template(value: Any) -> bool:
+    if not isinstance(value, list):
+        return False
+    for item in value:
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            continue
+        name = item["name"].casefold()
+        if name != "config.yml" and name.endswith((".md", ".yml", ".yaml")):
+            return True
+    return False
 
 
 def _contributor_commits(contributors: list[Any], maintainer: str | None) -> int | None:
